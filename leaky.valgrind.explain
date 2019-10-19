@@ -1,0 +1,7 @@
+Running 'valgrind --leak-check=yes --log-file="leaky.valgrind.out" ./leaky' results in the valgrind reporting 2 allocations, 1 free, 1032 bytes of memory used, and 8 bytes lost at exit.
+The 2nd allocation and 1024 bytes of memory usage are a result of an internal allocation by the C library when calling fprintf.
+The lost 8 bytes of memory in 1 block are a result of a failure to free the char* str before exiting.
+
+When ./leaky is run, the program allocates 8 bytes of memory to a char* and sets this char* to the value "Stringy"
+Next the program prints the char* to stdout along with the size of the char*
+Lastly the program exits without freeing the allocated char*
