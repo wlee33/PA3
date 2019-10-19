@@ -5,3 +5,5 @@ The lost 8 bytes of memory in 1 block are a result of a failure to free the char
 When ./leaky is run, the program allocates 8 bytes of memory to a char* and sets this char* to the value "Stringy"
 Next the program prints the char* to stdout along with the size of the char*
 Lastly the program exits without freeing the allocated char*
+
+When debugging with 'gdb leaky' it can be seen as per the screenshot "leakyGDB.png" that prior to the call to malloc in leaky.c:8 the char* str is uninitialized and not allocated. It can also be seen that just before the execution of the return statement on line 13 that the char* str is still allocated and will therefore cause a memory leak.
