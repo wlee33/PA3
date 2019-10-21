@@ -1,0 +1,7 @@
+At the begining of execution before the first malloc call on line 8, valgrind shows that all heap blocks are free and no leaks are possible.
+
+Directly after the execution of the malloc call on line 8, valgrind indicates that there are 8 bytes of memory allocated in 1 block. This memory corrosponds to the space allocated for the char* str.
+
+After the execution of line 10, the last line which accesses the allocated memory, valgrind reports that the 8 bytes allocated to the char* are now definitely lost. Additionally valgrind reports that 1024 bytes are still reachable in 1 block, this is due to the fprintf statement on line 10.
+
+
