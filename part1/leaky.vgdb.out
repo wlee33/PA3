@@ -1,0 +1,46 @@
+==5170== All heap blocks were freed -- no leaks are possible
+==5170== 
+Single stepping until exit from function _start,
+which has no line number information.
+
+Breakpoint 1, main () at leaky.c:8
+8		char* str = (char*)malloc(sizeof(char)*8);
+==5170== All heap blocks were freed -- no leaks are possible
+==5170== 
+9		str = "Stringy";
+==5170== LEAK SUMMARY:
+==5170==    definitely lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==    indirectly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==      possibly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==    still reachable: 8 (+8) bytes in 1 (+1) blocks
+==5170==         suppressed: 0 (+0) bytes in 0 (+0) blocks
+==5170== Reachable blocks (those to which a pointer was found) are not shown.
+==5170== To see them, add 'reachable any' args to leak_check
+==5170== 
+10		fprintf(stdout, "%s\nSize of string=%ld\n", str, sizeof(str));
+==5170== LEAK SUMMARY:
+==5170==    definitely lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==    indirectly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==      possibly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==    still reachable: 8 (+0) bytes in 1 (+0) blocks
+==5170==         suppressed: 0 (+0) bytes in 0 (+0) blocks
+==5170== Reachable blocks (those to which a pointer was found) are not shown.
+==5170== To see them, add 'reachable any' args to leak_check
+==5170== 
+13		return 0;
+==5170== 8 (+8) bytes in 1 (+1) blocks are definitely lost in loss record 2 of 3
+==5170==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5170==    by 0x1086DB: main (leaky.c:8)
+==5170== 
+==5170== LEAK SUMMARY:
+==5170==    definitely lost: 8 (+8) bytes in 1 (+1) blocks
+==5170==    indirectly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==      possibly lost: 0 (+0) bytes in 0 (+0) blocks
+==5170==    still reachable: 1,024 (+1,016) bytes in 1 (+0) blocks
+==5170==         suppressed: 0 (+0) bytes in 0 (+0) blocks
+==5170== Reachable blocks (those to which a pointer was found) are not shown.
+==5170== To see them, add 'reachable any' args to leak_check
+==5170== 
+14	}
+Detaching from program: /home/aliampolizzi/Desktop/cs450/PA3/part1/leaky, Remote target
+Ending remote debugging.
