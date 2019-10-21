@@ -23,8 +23,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int getsharedpage(void);
-int freesharedpage(void);
+int getsharedpage(int, int);
+int freesharedpage(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

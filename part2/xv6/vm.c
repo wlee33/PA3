@@ -385,6 +385,19 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+void*
+sharedmempage(int key, int numPages)
+{
+	void* address= 0x0;
+	return address;
+}
+
+void
+freesharedpage(int key)
+{
+	return;
+}
+
 //PAGEBREAK!
 // Blank page.
 //PAGEBREAK!
