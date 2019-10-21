@@ -89,3 +89,11 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int sys_getsharedpage(void){
+  return 0;
+}
+
+int sys_freesharedpage(void){
+  return 0;
+}
