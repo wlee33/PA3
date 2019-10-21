@@ -121,7 +121,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             GetSharedPage(int, int);
-void             FreeSharedPage(int);
+int             FreeSharedPage(int);
 // swtch.S
 void            swtch(struct context**, struct context*);
 
