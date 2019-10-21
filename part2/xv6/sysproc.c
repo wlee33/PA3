@@ -91,9 +91,18 @@ sys_uptime(void)
 }
 
 int sys_getsharedpage(void){
-  return 0;
+ int key;
+ int numPages;
+ if( argint(0,&key) < 0 || argint(1,&numPages) < 0 ){
+ 	return -1;
+ }
+   return 0;
 }
 
 int sys_freesharedpage(void){
-  return 0;
+  int key;
+  if(argint(0,&key) < 0){
+  	return -1;
+  }
+	return 0;
 }
