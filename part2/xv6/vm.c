@@ -433,8 +433,15 @@ sharedmeminit()
 		pagecounts[i]=0;
 	
 	}
+	int q;
+	for(i=0; i<NUM_PAGES; i++)
+	{
+		for(q=0; q<NUM_KEYS; q++)
+		{
+			pageaddresses[i][q]=0;
+		}
+	}	
 	
-	pageaddresses[NUM_PAGES][i];
 	
 	return;
 }
