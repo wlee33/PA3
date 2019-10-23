@@ -1,0 +1,1 @@
+Valgrind reports possibly lost memory when an array of characters are allocated and pointer arithmetic is used to point into the middle of the block, and then the program exits before the free statement leaving the pointer pointing to the middle of the block of memory. This can be seen in leakypossible.c

@@ -1,0 +1,1 @@
+Valgrind reports still reachable memory when a static char* is allocated and not freed before termination. This can be seen in leakyreachable.c where a static 10 byte array of characters is allocated and not freed before the return.
