@@ -397,6 +397,7 @@ void*
 sharedmempage(int key, int numPages)
 {
 	void* address= 0x0;
+  int firstCall=1; //flag for calling for the first time
 	
 
 	//check parameters are valid
@@ -408,8 +409,20 @@ sharedmempage(int key, int numPages)
 
 
 	//if first call for a process, start at the top of the process' VA space
+  for(int a=0;i<NUM_KEYS;i++)
+    if(proc->keys[a]==1)
+      firstCall = 0;
+  }
+  if(firstCall)
+    proc->top = KERNBASE;
+
   
 	//update the reference count of the shared page if the caller has not already used this shared page
+  if(proc->keys[key]==0){
+    proc->keys[key]==1;
+    ref_count[key]++;
+  } 
+  
 	//allocate memory if key hasn't been used before (kalloc();)
 	//set physical page contents to 0 (memcpy)
 	//store the reference to the physical page
