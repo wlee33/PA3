@@ -404,17 +404,25 @@ sharedmempage(int key, int numPages)
 	//update the reference count of the shared page if the caller has not already used this shared page
 	//allocate memory if key hasn't been used before (kalloc();)
 	
-	
+	char* memory;
+	int page;
+	for(page=0; page < NUM_PAGES; page++){ //for each requested page
+		memory = kalloc(); //grab physical memory page 
+		if(memory==0) {
+		cprintf("All Out Of Memory!\n");
+		return (void*)-1; //throw error
+		}
 	//set physical page contents to 0 (memcpy)
-	memset(memory,0,PGSIZE);
+		memset(memory,0,PGSIZE);
 	//store the reference to the physical page
-	pageaddresses[key][page] = memory;
+		pageaddresses[key][page] = memory;
 	//change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
-	proc->top -= PGSIZE;
+		proc->top -= PGSIZE;
 	//map virtual page to physical page with mappages()
-	if(mappages(proc->pgdir, addr, PGSIZE, PADDR(memory), PTE_P|PTE_W|PTE_U))
-	{ return (void*)-1; }
-
+		if(mappages(proc->pgdir, addr, PGSIZE, PADDR(memory), PTE_P|PTE_W|PTE_U))
+			{ return (void*)-1; }
+		
+	}
 	return address;
 }
 
