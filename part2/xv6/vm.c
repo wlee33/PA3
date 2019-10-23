@@ -400,7 +400,15 @@ sharedmempage(int key, int numPages)
 	
 
 	//check parameters are valid
+  if(key<0||key <NUM_KEYS)
+    return (void*)-1;
+  
+  if(numPages<0||numPages>NUM_PAGES)
+    return (void*)-1;
+
+
 	//if first call for a process, start at the top of the process' VA space
+  
 	//update the reference count of the shared page if the caller has not already used this shared page
 	//allocate memory if key hasn't been used before (kalloc();)
 	//set physical page contents to 0 (memcpy)
