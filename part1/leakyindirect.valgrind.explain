@@ -1,0 +1,3 @@
+Indirectly lost memory can be induced by creating a structure with dynamically allocated components and not freeing the parent node. 
+In doing so, the parent node, which has sole access to the children nodes, becomes unreachable and therefore lost. As a result the children nodes then become indirectly lost. This can be seen in leakyindirect.c and the corrosponding valgrind output in leakyindirect.valgrind.out.
+
