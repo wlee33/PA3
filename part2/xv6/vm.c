@@ -7,8 +7,16 @@
 #include "proc.h"
 #include "elf.h"
 
+#define NUM_KEYS (500)
+#define NUM_PAGES (500)
+
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
+
+void* pageaddresses[NUM_PAGES][NUM_KEYS];
+int refcounts[NUM_KEYS];
+int usedkeys[NUM_KEYS];
+int pagecounts[NUM_KEYS];
 
 // Set up CPU's kernel segment descriptors.
 // Run once on entry on each CPU.
@@ -389,7 +397,38 @@ void*
 sharedmempage(int key, int numPages)
 {
 	void* address= 0x0;
+	
+
+	//check parameters are valid
+	//if first call for a process, start at the top of the process' VA space
+	//update the reference count of the shared page if the caller has not already used this shared page
+	//allocate memory if key hasn't been used before (kalloc();)
+	//set physical page contents to 0 (memcpy)
+	//store the reference to the physical page
+	//change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
+	//map virtual page to physical page with mappages()
+	
+
 	return address;
+}
+
+void
+sharedmeminit()
+{
+	//initialize all of the support storage structures to 0
+	//callme in main.c as OS boots
+	int i;
+	for(i=0; i<NUM_KEYS; i++){
+	
+		refcounts[i]=0;
+		usedkeys[i]=0;
+		pagecounts[i]=0;
+	
+	}
+	
+	pageaddresses[NUM_PAGES][i];
+	
+	return;
 }
 
 void
