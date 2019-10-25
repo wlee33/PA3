@@ -401,7 +401,7 @@ sharedmempage(int key, int numPages)
 	
 
 	//check parameters are valid
-  if(key<0||key <NUM_KEYS)
+  if(key<0||key >NUM_KEYS)
     return (void*)-1;
   
   if(numPages<0||numPages>NUM_PAGES)
