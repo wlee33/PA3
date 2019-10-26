@@ -112,9 +112,9 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
   int i;
-  for(i=0; i<500; i++){
-       p->keys[i]=0;
-  }
+  //for(i=0; i<500; i++){
+  //     p->keys[i]=0;
+  //}
 
   return p;
 }

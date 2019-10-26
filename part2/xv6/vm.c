@@ -512,6 +512,9 @@ sharedmeminit()
 void
 freesharedpage(int key, struct proc* proc)
 {
+
+
+
 	return;
 }
 
