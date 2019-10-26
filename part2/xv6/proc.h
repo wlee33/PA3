@@ -50,8 +50,8 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int top;                     // top of VA
-  void* page_va_addr[500][500];// stores VA address of pages for the process
-  int keys[500];	             // List of Keys to shared memory pages
+  void* page_va_addr[30][30];// stores VA address of pages for the process
+  int keys[30];	             // List of Keys to shared memory pages
   
 };
 
