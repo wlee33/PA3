@@ -15,7 +15,7 @@ pde_t *kpgdir;  // for use in scheduler()
 
 void* pageaddresses[NUM_PAGES][NUM_KEYS];
 int refcounts[NUM_KEYS];
-int usedkeys[NUM_KEYS];
+int usedkeys[NUM_KEYS]; 
 int pagecounts[NUM_KEYS];
 
 // Set up CPU's kernel segment descriptors.
@@ -413,6 +413,7 @@ sharedmempage(int key, int numPages)
     if(proc->keys[a]==1)
       firstCall = 0;
   }
+
   if(firstCall)
     proc->top = KERNBASE;
 
@@ -424,26 +425,60 @@ sharedmempage(int key, int numPages)
   } 
   
 	//allocate memory if key hasn't been used before (kalloc();)
+  if(usedkeys[key]==0){
+    //first, varify that we are not accessing already allocated memory. It so, throw an error
+    if ((proc->top - numPages*PGSIZE) < proc->sz) {
+      return (void*)-1;
+    }
+    //start to allocate physical memory
+    char* memory;
+    int page;
+    for(page=0; page < numPages; page++){ //for each requested page
+      memory = kalloc(); //grab physical memory page 
+      if(memory==0) {
+      cprintf("All Out Of Memory!\n");
+      return (void*)-1; //throw error
+      }
+      //set physical page contents to 0 (memcpy)
+      memset(memory,0,PGSIZE);
+      //store the reference to the physical page
+      pageaddresses[key][page] = memory;
+      //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
+      address = (void*)(proc->top - PGSIZE*numPages);
+      proc->page_va_addr[key][page] = address;
+      proc->top -= PGSIZE;
+
+      //map virtual page to physical page with mappages()
+      if(mappages(proc->pgdir, address, PGSIZE, PADDR(memory), PTE_P|PTE_W|PTE_U)<0){
+         return (void*)-1; 
+      }
+	  }
+
+    //mark key as used in the usedkey array
+    usedkeys[key] = 1;
+    pagecounts[key] = numPages;
+  }else{ //key is being used by processes
+    //first, check if the current process is using this key. If so, start mapping for each requested page
+    if(proc->keys[key]==0){
+
+      for(int page=0;page<numPages;page++){
+
+        //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
+        address = (void*)(proc->top - PGSIZE*numPages);
+        proc->page_va_addr[key][page] = address;
+        //update the current user top
+        proc->top -= PGSIZE;
+
+        //map virtual page to physical page with mappages()
+        if(mappages(proc->pgdir, address, PGSIZE, PADDR(pageaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
+          return (void*)-1; 
+        }
+      }
+    }
+    
+  }
 	
-	char* memory;
-	int page;
-	for(page=0; page < NUM_PAGES; page++){ //for each requested page
-		memory = kalloc(); //grab physical memory page 
-		if(memory==0) {
-		cprintf("All Out Of Memory!\n");
-		return (void*)-1; //throw error
-		}
-	//set physical page contents to 0 (memcpy)
-		memset(memory,0,PGSIZE);
-	//store the reference to the physical page
-		pageaddresses[key][page] = memory;
-	//change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
-		proc->top -= PGSIZE;
-	//map virtual page to physical page with mappages()
-		if(mappages(proc->pgdir, addr, PGSIZE, PADDR(memory), PTE_P|PTE_W|PTE_U))
-			{ return (void*)-1; }
-		
-	}
+	
 	return address;
 }
 
