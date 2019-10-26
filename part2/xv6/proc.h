@@ -49,7 +49,10 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int keys[500];	       // List of Keys to shared memory pages
+  int top;                     // top of VA
+  void* page_va_addr[500][500];// stores VA address of pages for the process
+  int keys[500];	             // List of Keys to shared memory pages
+  
 };
 
 // Process memory is laid out contiguously, low addresses first:
