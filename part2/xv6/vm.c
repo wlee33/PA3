@@ -417,10 +417,11 @@ sharedmempage(int key, int numPages, struct proc* proc)
   if(firstCall)
     proc->top = KERNBASE;
 
+
   
-	//update the reference count of the shared page if the caller has not already used this shared page
+	//updatN the reference count of the shared page if the caller has not already used this shared page
   if(proc->keys[key]==0){
-    proc->keys[key]==1;
+    proc->keys[key]=1;//and set this key to used for this process
     refcounts[key]++;
   } 
   
@@ -452,7 +453,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
       if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
          return (void*)-1; 
       }
-	  }
+    }
 
     //mark key as used in the usedkey array
     usedkeys[key] = 1;
