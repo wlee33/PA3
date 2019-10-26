@@ -97,7 +97,7 @@ int sys_getsharedpage(void){
  	return -1;
  }
   
-   return (int)sharedmempage(key, numPages);
+   return (int)sharedmempage(key, numPages, myproc());
 }
 
 int sys_freesharedpage(void){
@@ -105,6 +105,6 @@ int sys_freesharedpage(void){
   if(argint(0,&key) < 0){
   	return -1;
   }
-  freesharedpage(key);
+  freesharedpage(key, myproc());
  return 0;
 }

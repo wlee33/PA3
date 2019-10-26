@@ -394,7 +394,7 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 }
 
 void*
-sharedmempage(int key, int numPages)
+sharedmempage(int key, int numPages, struct proc* proc)
 {
 	void* address= 0x0;
   int firstCall = 1; //flag for calling for the first time
@@ -449,7 +449,7 @@ sharedmempage(int key, int numPages)
       proc->top -= PGSIZE;
 
       //map virtual page to physical page with mappages()
-      if(mappages(proc->pgdir, address, PGSIZE, PADDR(memory), PTE_P|PTE_W|PTE_U)<0){
+      if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
          return (void*)-1; 
       }
 	  }
@@ -470,7 +470,7 @@ sharedmempage(int key, int numPages)
         proc->top -= PGSIZE;
 
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, PADDR(pageaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, (uint)(pageaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
           return (void*)-1; 
         }
       }
@@ -509,7 +509,7 @@ sharedmeminit()
 }
 
 void
-freesharedpage(int key)
+freesharedpage(int key, struct proc* proc)
 {
 	return;
 }
