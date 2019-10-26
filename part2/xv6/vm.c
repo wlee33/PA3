@@ -13,7 +13,7 @@
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
 
-void* pageaddresses[NUM_PAGES][NUM_KEYS];
+void* pageaddresses[NUM_KEYS][NUM_PAGES];
 int refcounts[NUM_KEYS];
 int usedkeys[NUM_KEYS]; 
 int pagecounts[NUM_KEYS];
@@ -407,9 +407,9 @@ sharedmempage(int key, int numPages, struct proc* proc)
   if(numPages<0||numPages>NUM_PAGES)
     return (void*)-1;
 
-
+  int a;
 	//if first call for a process, start at the top of the process' VA space
-  for(int a=0;a<NUM_KEYS;a++){
+  for(a=0;a<NUM_KEYS;a++){
     if(proc->keys[a]==1)
       firstCall = 0;
   }
@@ -445,37 +445,52 @@ sharedmempage(int key, int numPages, struct proc* proc)
       //store the reference to the physical page
       pageaddresses[key][page] = memory;
       //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
-      address = (void*)(proc->top - PGSIZE*numPages);
+      address = (void*)(proc->top - PGSIZE);
       proc->page_va_addr[key][page] = address;
+      pageaddresses[key][page] = address;
       proc->top -= PGSIZE;
 
       //map virtual page to physical page with mappages()
       if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
-         return (void*)-1; 
+        cprintf("mappages failed.");
+        return (void*)-1; 
       }
     }
 
     //mark key as used in the usedkey array
     usedkeys[key] = 1;
-    pagecounts[key] = numPages;
+    pagecounts[key] += numPages;
   }else{ //key is being used by processes
-    //first, check if the current process is using this key. If so, start mapping for each requested page
+    //first, check if the current process is using this key. If no, start mapping for each requested page
     if(proc->keys[key]==0){
+      int page;
+      for(page=0;page<numPages;page++){
 
-      for(int page=0;page<numPages;page++){
-
-        //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
-        address = (void*)(proc->top - PGSIZE*numPages);
+        //change the address of the next avalible virtual page in the calling process' address space 
+        address = (void*)(proc->top - PGSIZE);
         proc->page_va_addr[key][page] = address;
+        pageaddresses[key][page] = address;
         //update the current user top
         proc->top -= PGSIZE;
 
         //map virtual page to physical page with mappages()
         if(mappages(proc->pgdir, address, PGSIZE, (uint)(pageaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
+          cprintf("mappages failed.");
           return (void*)-1; 
         }
+
       }
+      pagecounts[key] += numPages;
+    }else
+    {
+      //if this process has already requested with this key, simply return the address stored in proc->page_va_addr[][]
+      int page;
+      for(page=0;page<numPages;page++){
+        address = pageaddresses[key][numPages]-PGSIZE;
+      }
+      pagecounts[key] += numPages;
     }
+    
     
     
   }
@@ -511,7 +526,7 @@ sharedmeminit()
 }
 
 void
-freesharedpage(int key, struct proc* proc)
+freesharedpage(int key)
 {
 
 
