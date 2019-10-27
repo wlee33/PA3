@@ -565,21 +565,21 @@ freesharedpage(int key, struct proc* proc)
 	int i;
 	int called=0;
 	int numPages = pagecounts[key];
-	for(i=0; i<NUM_KEYS; i++)
-	{
-		if(proc->keys[i]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
+	//for(i=0; i<NUM_KEYS; i++)
+	//{
+		if(proc->keys[key]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
 		{
 			called=1;
-			break;
+			//break;
 		}
 		if(!called) 
 		{
 			cprintf("Calling process not associated with that key\n");
 			return;
 		} //if it hasn't called, nothing to free, return 
-	}
+	//}
 	for(i=0; i<numPages; i++){ //for each page associated with the key, 
-		
+		cprintf("In freeing pages loop of freesharedpage\n");	
 		pte_t* pte = walkpgdir(proc->pgdir, proc->page_va_addr[key][i],0); //get the pte corropsponding to the VA for that key
 		uint pa;
 		
@@ -589,7 +589,8 @@ freesharedpage(int key, struct proc* proc)
      		
 		if(pa == 0)
                 	panic("kfree");
-                
+		
+		cprintf("Didn't panic inside freeing pages loop of freesharedpage\n");                
 		char *v = P2V(pa); //convert physical address to virtual
 	        
 		kfree(v); //Free the page
