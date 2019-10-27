@@ -475,7 +475,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
         //change the address of the next avalible virtual page in the calling process' address space 
 
-      address = (void*)(proc->top - PGSIZE);
+        address = (void*)(proc->top - PGSIZE);
         proc->page_va_addr[key][page] = address;
         pageaddresses[key][page] = address;
         //update the current user top
@@ -534,10 +534,38 @@ sharedmeminit()
 }
 
 void
-freesharedpage(int key)
+freesharedpage(int key, struct proc* proc)
 {
+	//verify that the calling process has already called sharedmempage with that key & hasn't been removed already 
+	//	(ie, is still mapped in the process' page_va_addr array)
+ 	//remove page table entry from calling process
+	//decrement the reference
+	//check if refcount == 0
+	//if so, deallocate (kfree)
+	
+	
 
-
+	int i;
+	int called=0;
+	int numPages = pagecounts[key];
+	for(i=0; i<NUM_KEYS; i++)
+	{
+		if(proc->keys[i]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
+		{
+			called=1;
+			break;
+		}
+		if(!called) 
+		{
+			cprintf("Calling process not associated with that key\n");
+			return;
+		} //if it hasn't called, nothing to free, return 
+	}
+	for(i=0; i<numPages; i++){ //for each page associated with the key, 
+		pte_t* pte = walkpgdir(proc->pgdir, proc->page_va_addr[key][i],0); //get the pte corropsponding to the VA for that key
+		
+	
+	}
 
 	return;
 }
