@@ -449,6 +449,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
       memset(memory,0,PGSIZE);
       //store the reference to the physical page
       pagepaddresses[key][page] = memory;
+      cprintf("PA stored in key %d is %d\n", key, memory);
       //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
       address = (void*)(proc->top - PGSIZE);
       proc->page_va_addr[key][page] = address;
@@ -468,31 +469,28 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
 
   }else{ //key is being used by processes
-    //cprintf("in sharedmempage() 3, proc->keys[key] of this process is: %d\n",proc->keys[key]);
+    
     //first, check if the current process is using this key. If not, start mapping for each requested page
 
     if(firstCall){
-      cprintf("in here!!!!\n");
+      cprintf("Key is being used by other processes, but it's the first time being called by the current process\n");
       int page;
       for(page=0;page<numPages;page++){
-
-
-
-
-
 
         //change the address of the next avalible virtual page in the calling process' address space 
 
         address = (void*)(proc->top - PGSIZE);
+        cprintf("address is: %x\n", address);
         proc->page_va_addr[key][page] = address;
         pagevaddresses[key][page] = address;
+
         //update the current user top
         proc->top -= PGSIZE;
-
-        int numP = pagecounts[key];
-        //cprintf("page count in key %d is %d\n",key, numP);
+        cprintf("proc->top is now: %x\n", proc->top);
+        
+        cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][numP], PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][page], PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
         }
@@ -510,7 +508,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
         //cprintf("VA calculated from -PGSIZE is: %x\n",address);
 
       }
-      //cprintf("in sharedmempage() 4 current process already requested with the same key\n");
+      cprintf("Current process has requested with the same key before\n");
       pagecounts[key] += numPages;
     }
     
