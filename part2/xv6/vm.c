@@ -7,8 +7,10 @@
 #include "proc.h"
 #include "elf.h"
 
-#define NUM_KEYS (500)
-#define NUM_PAGES (500)
+#define NUM_KEYS (8)
+
+
+#define NUM_PAGES (8)
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -474,8 +476,14 @@ sharedmempage(int key, int numPages, struct proc* proc)
       int page;
       for(page=0;page<numPages;page++){
 
+
+
+
+
+
         //change the address of the next avalible virtual page in the calling process' address space 
-        address = (void*)(proc->top - PGSIZE);
+
+      address = (void*)(proc->top - PGSIZE);
         proc->page_va_addr[key][page] = address;
         pagevaddresses[key][page] = address;
         //update the current user top

@@ -52,6 +52,7 @@ struct proc {
   int top;                     // top of VA
   void* page_va_addr[30][30];// stores VA address of pages for the process
   int keys[30];	             // List of Keys to shared memory pages
+
   
 };
 
