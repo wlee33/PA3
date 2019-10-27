@@ -580,7 +580,18 @@ freesharedpage(int key, struct proc* proc)
 	}
 	for(i=0; i<numPages; i++){ //for each page associated with the key, 
 		pte_t* pte = walkpgdir(proc->pgdir, proc->page_va_addr[key][i],0); //get the pte corropsponding to the VA for that key
-		
+		uint pa;
+		//Do as is done in the deallocuvm, 
+		//convert pte to PA
+
+      		pa = PTE_ADDR(*pte);
+     		if(pa == 0)
+                	panic("kfree");
+                char *v = P2V(pa);
+	        kfree(v);
+                *pte = 0;
+		//convert PA to VA
+		//Free VA		
 	
 	}
 
