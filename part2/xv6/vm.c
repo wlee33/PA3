@@ -15,7 +15,9 @@
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
 
-void* pageaddresses[NUM_KEYS][NUM_PAGES];
+void* pagevaddresses[NUM_KEYS][NUM_PAGES];
+void* pagepaddresses[NUM_KEYS][NUM_PAGES];
+
 int refcounts[NUM_KEYS];
 int usedkeys[NUM_KEYS]; 
 int pagecounts[NUM_KEYS];
@@ -421,12 +423,13 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
 
   
-	//updatN the reference count of the shared page if the caller has not already used this shared page
+	//update the reference count of the shared page if the calling process has not already used this shared page
   if(proc->keys[key]==0){
     proc->keys[key]=1;//and set this key to used for this process
+    //cprintf("key set to used with %d\n",proc->keys[key]);
     refcounts[key]++;
   } 
-  
+
 	//allocate memory if key hasn't been used before (kalloc();)
   if(usedkeys[key]==0){
     //first, varify that we are not accessing already allocated memory. It so, throw an error
@@ -445,13 +448,12 @@ sharedmempage(int key, int numPages, struct proc* proc)
       //set physical page contents to 0 (memcpy)
       memset(memory,0,PGSIZE);
       //store the reference to the physical page
-      pageaddresses[key][page] = memory;
+      pagepaddresses[key][page] = memory;
       //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
       address = (void*)(proc->top - PGSIZE);
       proc->page_va_addr[key][page] = address;
-      pageaddresses[key][page] = address;
       proc->top -= PGSIZE;
-
+      pagevaddresses[key][page] = address;
       //map virtual page to physical page with mappages()
       if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
         cprintf("mappages failed.");
@@ -462,9 +464,15 @@ sharedmempage(int key, int numPages, struct proc* proc)
     //mark key as used in the usedkey array
     usedkeys[key] = 1;
     pagecounts[key] += numPages;
+    //cprintf("first time key is used! page count for key %d is %d\n",key,pagecounts[key]);
+
+
   }else{ //key is being used by processes
-    //first, check if the current process is using this key. If no, start mapping for each requested page
-    if(proc->keys[key]==0){
+    //cprintf("in sharedmempage() 3, proc->keys[key] of this process is: %d\n",proc->keys[key]);
+    //first, check if the current process is using this key. If not, start mapping for each requested page
+
+    if(firstCall){
+      cprintf("in here!!!!\n");
       int page;
       for(page=0;page<numPages;page++){
 
@@ -477,12 +485,14 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
         address = (void*)(proc->top - PGSIZE);
         proc->page_va_addr[key][page] = address;
-        pageaddresses[key][page] = address;
+        pagevaddresses[key][page] = address;
         //update the current user top
         proc->top -= PGSIZE;
 
+        int numP = pagecounts[key];
+        //cprintf("page count in key %d is %d\n",key, numP);
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, (uint)(pageaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][numP], PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
         }
@@ -494,8 +504,13 @@ sharedmempage(int key, int numPages, struct proc* proc)
       //if this process has already requested with this key, simply return the address stored in proc->page_va_addr[][]
       int page;
       for(page=0;page<numPages;page++){
-        address = pageaddresses[key][numPages]-PGSIZE;
+        
+        address = pagevaddresses[key][page]-PGSIZE;
+        //cprintf("VA stored in 2D array is: %x\n",pagevaddresses[key][page]);
+        //cprintf("VA calculated from -PGSIZE is: %x\n",address);
+
       }
+      //cprintf("in sharedmempage() 4 current process already requested with the same key\n");
       pagecounts[key] += numPages;
     }
     
@@ -525,7 +540,9 @@ sharedmeminit()
 	{
 		for(q=0; q<NUM_KEYS; q++)
 		{
-			pageaddresses[i][q]=0;
+			pagepaddresses[i][q]=0;
+      pagevaddresses[i][q]=0;
+
 		}
 	}	
 	
