@@ -295,18 +295,37 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 void
 freevm(pde_t *pgdir)
 {
-  uint i;
+  uint i,a,b;
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
   deallocuvm(pgdir, KERNBASE, 0);
-  for(i = 0; i < NPDENTRIES; i++){
+  
+  
+  for(a=0; a < NUM_KEYS; a++)
+  {
+  	if(myproc()->keys[a] == 1)
+		refcounts[a]--; //reduce the reference count on each shared page for this process
+  }
+
+  for(i = 0; i < NPDENTRIES; i++){ //for each page directory entry (Start PD Entry Loop)
     if(pgdir[i] & PTE_P){
       char * v = P2V(PTE_ADDR(pgdir[i]));
-      kfree(v);
+      
+      for(a=0; a<NUM_KEYS; a++) //For each key
+      {
+      	 if(refcounts[i] != 0)//page being used elsewhere, don't free it
+		 break;
+	 for(b =0; b <NUM_PAGES; b++)//for each page
+		 if ((char*)PTE_ADDR(pgdir[i]) == pageaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
+			 					       //shared physical page addresses
+			break;
+      }
+      if(a==NUM_KEYS && b==NUM_PAGES)
+      	kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere
     }
-  }
-  kfree((char*)pgdir);
+  } //end PD Entry loop
+  kfree((char*)pgdir);//free pgdir itself
 }
 
 // Clear PTE_U on a page. Used to create an inaccessible
@@ -489,10 +508,11 @@ sharedmempage(int key, int numPages, struct proc* proc)
         //update the current user top
         proc->top -= PGSIZE;
 
-        int numP = pagecounts[key];
+        //
+	//int numP = pagecounts[key];
         //cprintf("page count in key %d is %d\n",key, numP);
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][numP], PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][page], PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
         }
