@@ -295,18 +295,37 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 void
 freevm(pde_t *pgdir)
 {
-  uint i;
+  uint i,a,b;
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
   deallocuvm(pgdir, KERNBASE, 0);
-  for(i = 0; i < NPDENTRIES; i++){
+  
+  
+  for(a=0; a < NUM_KEYS; a++)
+  {
+  	if(myproc()->keys[a] == 1)
+		refcounts[a]--; //reduce the reference count on each shared page for this process
+  }
+
+  for(i = 0; i < NPDENTRIES; i++){ //for each page directory entry (Start PD Entry Loop)
     if(pgdir[i] & PTE_P){
       char * v = P2V(PTE_ADDR(pgdir[i]));
-      kfree(v);
+      
+      for(a=0; a<NUM_KEYS; a++) //For each key
+      {
+      	 if(refcounts[i] != 0)//page being used elsewhere, don't free it
+		 break;
+	 for(b =0; b <NUM_PAGES; b++)//for each page
+		 if ((char*)PTE_ADDR(pgdir[i]) == pageaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
+			 					       //shared physical page addresses
+			break;
+      }
+      if(a==NUM_KEYS && b==NUM_PAGES)
+      	kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere
     }
-  }
-  kfree((char*)pgdir);
+  } //end PD Entry loop
+  kfree((char*)pgdir);//free pgdir itself
 }
 
 // Clear PTE_U on a page. Used to create an inaccessible
@@ -486,6 +505,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
         //update the current user top
         proc->top -= PGSIZE;
+
         cprintf("proc->top is now: %x\n", proc->top);
         
         cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
@@ -568,7 +588,7 @@ freesharedpage(int key, struct proc* proc)
 		if(proc->keys[key]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
 		{
 			called=1;
-		//	break;
+
 		}
 		if(!called) 
 		{
@@ -577,7 +597,7 @@ freesharedpage(int key, struct proc* proc)
 		} //if it hasn't called, nothing to free, return 
 	//}
 	for(i=0; i<numPages; i++){ //for each page associated with the key, 
-		
+		cprintf("In freeing pages loop of freesharedpage\n");	
 		pte_t* pte = walkpgdir(proc->pgdir, proc->page_va_addr[key][i],0); //get the pte corropsponding to the VA for that key
 		uint pa;
 		cprintf("pte is: %p\n", pte);		
@@ -587,7 +607,8 @@ freesharedpage(int key, struct proc* proc)
      		
 		if(pa == 0)
                 	panic("kfree");
-                
+		
+		cprintf("Didn't panic inside freeing pages loop of freesharedpage\n");                
 		char *v = P2V(pa); //convert physical address to virtual
 	        
 		kfree(v); //Free the page
