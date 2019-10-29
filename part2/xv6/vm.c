@@ -456,7 +456,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
       proc->top -= PGSIZE;
       pagevaddresses[key][page] = address;
       //map virtual page to physical page with mappages()
-      if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
+      if(mappages(proc->pgdir, address, PGSIZE, PGROUNDDOWN((uint)(memory)), PTE_P|PTE_W|PTE_U)<0){
         cprintf("mappages failed.");
         return (void*)-1; 
       }
@@ -490,7 +490,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
         
         cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][page], PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, PGROUNDDOWN((uint)pagepaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
         }
