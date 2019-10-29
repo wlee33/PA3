@@ -88,7 +88,15 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  int a,b;
+  for (a=0; a<NUM_KEYS; a++) //init shared mem structures to 0
+  {
+  	p->keys[i] = 0;
+	for(b=0; b<NUM_PAGES; b++)
+	{
+		p->pagr_va_addr[a][b] = 0;
+	}
+  }
   release(&ptable.lock);
 
   // Allocate kernel stack.
