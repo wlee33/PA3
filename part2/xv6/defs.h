@@ -191,3 +191,6 @@ void            freesharedpage(int, struct proc*);
 void            sharedmeminit(void);
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+#define NUM_PAGES (20)
+#define NUM_KEYS (20)

@@ -7,10 +7,10 @@
 #include "proc.h"
 #include "elf.h"
 
-#define NUM_KEYS (8)
+//#define NUM_KEYS (8)
 
 
-#define NUM_PAGES (8)
+//#define NUM_PAGES (8)
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -317,7 +317,7 @@ freevm(pde_t *pgdir)
       	 if(refcounts[i] != 0)//page being used elsewhere, don't free it
 		 break;
 	 for(b =0; b <NUM_PAGES; b++)//for each page
-		 if ((char*)PTE_ADDR(pgdir[i]) == pageaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
+		 if ((char*)PTE_ADDR(pgdir[i]) == pagepaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
 			 					       //shared physical page addresses
 			break;
       }
