@@ -212,16 +212,6 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
-  int a;
-  for(a=0; a < NUM_KEYS; a++) //for each key in proc list, clone from parent to child
-  {
-  	np->keys[a] = curproc->keys[a];
-	for(i=0; i<NUM_PAGES; i++) //also clone phys address 
-	{
-		np->page_va_addr[a][i] = curproc->page_va_addr[a][i];
-	}
-  }
-  np->top = curproc->top;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
