@@ -321,14 +321,17 @@ freevm(pde_t *pgdir)
           if ((char*)PTE_ADDR(pgdir[i]) == pagepaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
 			 					       //shared physical page addresses
             break;}
+      }
       if(a==NUM_KEYS && b==NUM_PAGES)
-      	    kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere
-        
+      	kfree(v); 
       
-      } //end PD Entry loop
-      kfree((char*)pgdir);//free pgdir itself
+    
+      //only free page if it wasnt found to be used as shared mem elsewhere (both key and page loops ran through without breaking)
+
     }
   }
+  //end PD Entry loop
+  kfree((char*)pgdir);//free pgdir itself
 }
   
 
