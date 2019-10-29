@@ -216,7 +216,7 @@ fork(void)
   for(a=0; a < NUM_KEYS; a++) //for each key in proc list, clone from parent to child
   {
   	np->keys[a] = curproc->keys[a];
-	for(i=0; i<NUM_PAGES; i++) //also clone phys address 
+	for(i=0; i<NUM_PAGES; i++) //also clone virtual address 
 	{
 		np->page_va_addr[a][i] = curproc->page_va_addr[a][i];
 	}
