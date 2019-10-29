@@ -88,7 +88,15 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  int a,b;
+  for (a=0; a<NUM_KEYS; a++) //init shared mem structures to 0
+  {
+  	p->keys[a] = 0;
+	for(b=0; b<NUM_PAGES; b++)
+	{
+		p->page_va_addr[a][b] = 0;
+	}
+  }
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -203,6 +211,17 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+
+  int a;
+  for(a=0; a < NUM_KEYS; a++) //for each key in proc list, clone from parent to child
+  {
+  	np->keys[a] = curproc->keys[a];
+	for(i=0; i<NUM_PAGES; i++) //also clone phys address 
+	{
+		np->page_va_addr[a][i] = curproc->page_va_addr[a][i];
+	}
+  }
+  np->top = curproc->top;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;

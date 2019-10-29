@@ -7,10 +7,10 @@
 #include "proc.h"
 #include "elf.h"
 
-#define NUM_KEYS (8)
+//#define NUM_KEYS (8)
 
 
-#define NUM_PAGES (8)
+//#define NUM_PAGES (8)
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -295,19 +295,42 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 void
 freevm(pde_t *pgdir)
 {
-  uint i;
+  uint i,a,b;
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
   deallocuvm(pgdir, KERNBASE, 0);
-  for(i = 0; i < NPDENTRIES; i++){
+  
+  
+  for(a=0; a < NUM_KEYS; a++)
+  {
+  	if(myproc()->keys[a] == 1)
+		refcounts[a]--; //reduce the reference count on each shared page for this process
+  }
+
+  for(i = 0; i < NPDENTRIES; i++){ //for each page directory entry (Start PD Entry Loop)
     if(pgdir[i] & PTE_P){
       char * v = P2V(PTE_ADDR(pgdir[i]));
-      kfree(v);
+      
+      for(a=0; a<NUM_KEYS; a++) //For each key
+      {
+      	if(refcounts[i] != 0)//page being used elsewhere, don't free it
+		        break;
+      
+	      for(b=0; b <NUM_PAGES; b++){//for each page
+          if ((char*)PTE_ADDR(pgdir[i]) == pagepaddresses[i][b]) //if address at pgdir[i] is in the stored list of 
+			 					       //shared physical page addresses
+            break;}
+      if(a==NUM_KEYS && b==NUM_PAGES)
+      	    kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere
+        
+      
+      } //end PD Entry loop
+      kfree((char*)pgdir);//free pgdir itself
     }
   }
-  kfree((char*)pgdir);
 }
+  
 
 // Clear PTE_U on a page. Used to create an inaccessible
 // page beneath the user stack.
@@ -456,7 +479,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
       proc->top -= PGSIZE;
       pagevaddresses[key][page] = address;
       //map virtual page to physical page with mappages()
-      if(mappages(proc->pgdir, address, PGSIZE, PGROUNDDOWN((uint)(memory)), PTE_P|PTE_W|PTE_U)<0){
+      if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
         cprintf("mappages failed.");
         return (void*)-1; 
       }
@@ -486,11 +509,12 @@ sharedmempage(int key, int numPages, struct proc* proc)
 
         //update the current user top
         proc->top -= PGSIZE;
+
         cprintf("proc->top is now: %x\n", proc->top);
         
         cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
         //map virtual page to physical page with mappages()
-        if(mappages(proc->pgdir, address, PGSIZE, PGROUNDDOWN((uint)pagepaddresses[key][page]), PTE_P|PTE_W|PTE_U)<0){
+        if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][page]  , PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
         }
@@ -563,31 +587,32 @@ freesharedpage(int key, struct proc* proc)
 	int i;
 	int called=0;
 	int numPages = pagecounts[key];
-	for(i=0; i<NUM_KEYS; i++)
-	{
-		if(proc->keys[i]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
+	//for(i=0; i<NUM_KEYS; i++)
+	//{
+		if(proc->keys[key]==1)//if the key is in the calling process' list of keys, its has called sharedmempage before
 		{
 			called=1;
-			break;
+
 		}
 		if(!called) 
 		{
 			cprintf("Calling process not associated with that key\n");
 			return;
 		} //if it hasn't called, nothing to free, return 
-	}
+	//}
 	for(i=0; i<numPages; i++){ //for each page associated with the key, 
-		
+		cprintf("In freeing pages loop of freesharedpage\n");	
 		pte_t* pte = walkpgdir(proc->pgdir, proc->page_va_addr[key][i],0); //get the pte corropsponding to the VA for that key
 		uint pa;
-		
+		cprintf("pte is: %p\n", pte);		
 		//Do as is done in the deallocuvm, 
 		
       		pa = PTE_ADDR(*pte); //convert pte to physical address
      		
 		if(pa == 0)
                 	panic("kfree");
-                
+		
+		cprintf("Didn't panic inside freeing pages loop of freesharedpage\n");                
 		char *v = P2V(pa); //convert physical address to virtual
 	        
 		kfree(v); //Free the page
