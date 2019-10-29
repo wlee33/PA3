@@ -322,7 +322,7 @@ freevm(pde_t *pgdir)
 			break;
       }
       if(a==NUM_KEYS && b==NUM_PAGES)
-      	kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere
+      	kfree(v); //only free page if it wasnt found to be used as shared mem elsewhere (both key and page loops ran through without breaking)
     }
   } //end PD Entry loop
   kfree((char*)pgdir);//free pgdir itself
