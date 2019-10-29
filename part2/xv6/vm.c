@@ -295,7 +295,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 void
 freevm(pde_t *pgdir)
 {
-  uint i,a,b;
+  uint i,a;
+  uint b=0;
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
@@ -497,7 +498,6 @@ sharedmempage(int key, int numPages, struct proc* proc)
   }else{ //key is being used by processes
     
     //first, check if the current process is using this key. If not, start mapping for each requested page
-
     if(firstCall){
       cprintf("Key is being used by other processes, but it's the first time being called by the current process\n");
       int page;
@@ -527,16 +527,27 @@ sharedmempage(int key, int numPages, struct proc* proc)
     }else
     {
       //if this process has already requested with this key, simply return the address stored in proc->page_va_addr[][]
-      int page;
-      for(page=0;page<numPages;page++){
+      //int page = 0;
+      /*for(page=0;page<numPages;page++){
         
         address = pagevaddresses[key][page]-PGSIZE;
         //cprintf("VA stored in 2D array is: %x\n",pagevaddresses[key][page]);
         //cprintf("VA calculated from -PGSIZE is: %x\n",address);
 
       }
-      cprintf("Current process has requested with the same key before\n");
-      pagecounts[key] += numPages;
+      */
+     //forked process comes in here
+      if(numPages == pagecounts[key]){
+        address = pagevaddresses[key][numPages];
+        //cprintf( "Mapping with stored PA %d\n",pagepaddresses[key][numPages-1]);
+        
+        cprintf("Current process has requested with the same key before\n");
+
+      }else{
+        cprintf("Number of pages requested is too high\n");
+      }
+      
+      //pagecounts[key] += numPages;
     }
     
     
