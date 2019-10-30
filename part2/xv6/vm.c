@@ -280,10 +280,24 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       a = PGADDR(PDX(a) + 1, 0, 0) - PGSIZE;
     else if((*pte & PTE_P) != 0){
       pa = PTE_ADDR(*pte);
-      if(pa == 0)
-        panic("kfree");
+      if(pa == 0){
+      	cprintf("dealloc panic\n");
+	panic("kfree");
+      
+      }
       char *v = P2V(pa);
-      kfree(v);
+      int i, j;
+      for(i=0;i<NUM_KEYS;i++){
+      	for(j=0; j<NUM_PAGES; j++){
+		if( (uint)pagepaddresses[i][j] == pa ){
+			goto outside_of_loop;
+		}
+	}
+      }
+outside_of_loop:
+      if(i == NUM_KEYS && j==NUM_PAGES){
+      	kfree(v);
+      }      
       *pte = 0;
     }
   }
@@ -469,18 +483,23 @@ sharedmempage(int key, int numPages, struct proc* proc)
     for(page=0; page < numPages; page++){ //for each requested page
       memory = kalloc(); //grab physical memory page 
       if(memory==0) {
-      cprintf("All Out Of Memory!\n");
-      return (void*)-1; //throw error
+      	cprintf("All Out Of Memory!\n");
+      	return (void*)-1; //throw error
       }
       //set physical page contents to 0 (memcpy)
       memset(memory,0,PGSIZE);
       //store the reference to the physical page
       pagepaddresses[key][page] = memory;
-      cprintf("PA stored in key %d is %d\n", key, memory);
+      
+      cprintf("PA stored in key %d is %x\n", key, memory);
+      
       //change the address of the next avalible virtual page in the calling process' address space ie (oldtop-pagesize*numPages)
-      address = (void*)(proc->top - PGSIZE);
+      address = (void*)(proc->top-PGSIZE);
+
       proc->page_va_addr[key][page] = address;
+      
       proc->top -= PGSIZE;
+
       pagevaddresses[key][page] = address;
       //map virtual page to physical page with mappages()
       if(mappages(proc->pgdir, address, PGSIZE, (uint)(memory), PTE_P|PTE_W|PTE_U)<0){
@@ -499,23 +518,23 @@ sharedmempage(int key, int numPages, struct proc* proc)
     
     //first, check if the current process is using this key. If not, start mapping for each requested page
     if(firstCall){
-      cprintf("Key is being used by other processes, but it's the first time being called by the current process\n");
+      //cprintf("Key is being used by other processes, but it's the first time being called by the current process\n");
       int page;
       for(page=0;page<numPages;page++){
 
         //change the address of the next avalible virtual page in the calling process' address space 
 
-        address = (void*)(proc->top - PGSIZE);
-        cprintf("address is: %x\n", address);
+        address = (void*)(proc->top-PGSIZE);
+        //cprintf("address is: %x\n", address);
         proc->page_va_addr[key][page] = address;
         pagevaddresses[key][page] = address;
 
         //update the current user top
         proc->top -= PGSIZE;
 
-        cprintf("proc->top is now: %x\n", proc->top);
+        //cprintf("proc->top is now: %x\n", proc->top);
         
-        cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
+        //cprintf("PA in key %d is %d\n",key, (uint)pagepaddresses[key][page]);
         //map virtual page to physical page with mappages()
         if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][page]  , PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
@@ -530,7 +549,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
      //forked process comes in here
       if(numPages == pagecounts[key]){
         address = pagevaddresses[key][numPages];
-        cprintf( "Mapping with stored PA %d\n",pagepaddresses[key][numPages-1]);
+        //cprintf( "Mapping with stored PA %d\n",pagepaddresses[key][numPages-1]);
         if(mappages(proc->pgdir, address, PGSIZE, (uint)pagepaddresses[key][numPages-1], PTE_P|PTE_W|PTE_U)<0){
           cprintf("mappages failed.");
           return (void*)-1; 
@@ -550,7 +569,7 @@ sharedmempage(int key, int numPages, struct proc* proc)
     
   }
 	
-	
+	cprintf("physical address of mem = %x", pagepaddresses[key][numPages-1]);	
 	return address;
 }
 
@@ -619,9 +638,10 @@ freesharedpage(int key, struct proc* proc)
 		
       		pa = PTE_ADDR(*pte); //convert pte to physical address
      		
-		if(pa == 0)
-                	panic("kfree");
-		
+		if(pa == 0){
+                	cprintf("From freesharepage kfree panic\n"); 
+			panic("kfree");
+		}
 		cprintf("Didn't panic inside freeing pages loop of freesharedpage\n");                
 		char *v = P2V(pa); //convert physical address to virtual
 	        
